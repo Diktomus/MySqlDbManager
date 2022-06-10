@@ -16,9 +16,9 @@ Build manager with `go build` command and launch:
 
 ```MySqlDbManager -login=my_login -passwd=my_passwd -ip=localhost -port=3306 -db_name=my_database```
 
-*login* - database login
-*passwd*- database password
-*ip* - database ip
-*port* - database port
-*db_name* - database name
-*max_conns* - max database connections
+*login* - database login<br>
+*passwd*- database password<br>
+*ip* - database ip<br>
+*port* - database port<br>
+*db_name* - database name<br>
+*max_conns* - max database connections<br>
