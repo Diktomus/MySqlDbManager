@@ -3,12 +3,12 @@ MySql manager is a web service that makes CRUD (create, read, update, delete) qu
 
 ### HTTP requests supported
 
-GET / - get all tables in database
-GET /{table}?limit=20&offset=2 - get 20 entries from 2nd entry
-GET /{table}/{id} - get entry whith specified id
-PUT /{table} - create entry (columns and values are sent in request body)
-POST /{table}/{id} - update entry with specified id (columns and values are sent in request body)
-DELETE /{table}/{id} - delete entry with specified id (columns and values are sent in request body)
+GET / - get all tables in database<br>
+GET /{table}?limit=20&offset=2 - get 20 entries from 2nd entry<br>
+GET /{table}/{id} - get entry whith specified id<br>
+PUT /{table} - create entry (columns and values are sent in request body)<br>
+POST /{table}/{id} - update entry with specified id (columns and values are sent in request body)<br>
+DELETE /{table}/{id} - delete entry with specified id (columns and values are sent in request body)<br>
 
 ### Build and launch
 
