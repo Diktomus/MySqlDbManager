@@ -94,48 +94,45 @@ func (controller *Controller) resolveQueryParams(tableName string, colsByVals ma
 	return queryArgs, affectedColumns
 }
 
-func NewController(database *sql.DB) *Controller {
-	rows, err := database.Query("SHOW TABLES")
+func (controller *Controller) getTablesRows() (*sql.Rows, error) {
+	rows, err := controller.DB.Query("SHOW TABLES")
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	tablesNames := make([]string, 0)
-	var value string
-	for rows.Next() {
-		err = rows.Scan(&value)
-		if err != nil {
-			panic(err)
-		}
-		tablesNames = append(tablesNames, value)
+	return rows, nil
+}
+
+func (controller *Controller) getColumnsRows(tableName string) (*sql.Rows, error) {
+	query := fmt.Sprintf("SHOW COLUMNS FROM %s", tableName)
+	rows, err := controller.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	return rows, nil
+}
+
+func (controller *Controller) Init() {
+	rows, err := controller.getTablesRows()
+	if err != nil {
+		// TODO: logger
+		return
 	}
 
+	tablesNames := GetColumnValues("Tables_in_animals", rows)
 	tables := make([]Table, 0, len(tablesNames))
 
 	for _, tableName := range tablesNames {
-		query := fmt.Sprintf("SHOW COLUMNS FROM %s", tableName)
-		rows, err = database.Query(query)
-		if err != nil {
-			panic(err)
-		}
+		rows, err = controller.getColumnsRows(tableName)
+		// TODO: logger
+		columns := GetColumnValues("Field", rows)
 
-		queryColumns, _ := rows.Columns()
-		scanBuffer := PrepareScanBuffer(len(queryColumns))
-		columns := make([]string, 0)
-		for rows.Next() {
-			err = rows.Scan(scanBuffer.Pointers...)
-			if err != nil {
-				panic(err)
-			}
-
-			if column, ok := scanBuffer.Values[0].([]byte); ok {
-				columns = append(columns, string(column))
-			}
-		}
 		table := Table{Name: tableName, Columns: columns}
 		tables = append(tables, table)
 	}
+	controller.Tables = tables
+}
 
-	rows.Close()
+func NewController(database *sql.DB) *Controller {
 
-	return &Controller{DB: database, Tables: tables}
+	return &Controller{DB: database}
 }

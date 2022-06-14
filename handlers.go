@@ -1,14 +1,12 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
 )
 
 type Handlers struct {
-	DB         *sql.DB
 	controller *Controller
 }
 
@@ -33,9 +31,12 @@ func (h *Handlers) GetEntriesHandler(resp http.ResponseWriter, req *http.Request
 	offset, _ := strconv.Atoi(req.FormValue("offset"))
 
 	rows := h.controller.GetRows(tableName, limit, offset)
+	defer rows.Close()
 
-	adaptedRows := AdaptDbRowsData(rows)
-	rows.Close()
+	adaptedRows, err := AdaptSqlRows(rows)
+	if err != nil {
+		return
+	}
 
 	WriteRowsToResp(adaptedRows, resp)
 
@@ -50,18 +51,10 @@ func (h *Handlers) GetEntryHandler(resp http.ResponseWriter, req *http.Request) 
 
 	columns := h.controller.GetColumns(tableName)
 
-	scanBuffer := PrepareScanBuffer(len(columns))
-
-	err := row.Scan(scanBuffer.Pointers...)
-	if err == sql.ErrNoRows {
-		http.NotFound(resp, req)
+	adaptedRow, err := AdaptSqlRow(row, columns)
+	if err != nil {
 		return
-	} else if err != nil {
-		http.Error(resp, http.StatusText(500), 500)
 	}
-
-	adaptedRow := ResolveAdaptedRow(columns, scanBuffer.Values)
-
 	fmt.Fprintf(resp, "Row with id = %d\n", id)
 	WriteRowsToResp([]AdaptedRow{adaptedRow}, resp)
 

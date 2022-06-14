@@ -34,9 +34,9 @@ func main() {
 	}
 
 	controller := NewController(database)
+	controller.Init()
 
 	handlers := &Handlers{
-		DB:         database,
 		controller: controller,
 	}
 
