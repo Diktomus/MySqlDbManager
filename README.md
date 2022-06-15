@@ -10,11 +10,7 @@ PUT /{table} - create entry (columns and values are sent in request body)<br>
 POST /{table}/{id} - update entry with specified id (columns and values are sent in request body)<br>
 DELETE /{table}/{id} - delete entry with specified id (columns and values are sent in request body)<br>
 
-### Build and launch
-
-Build manager with `go build` command and launch:
-
-```MySqlDbManager -login=my_login -passwd=my_passwd -ip=localhost -port=3306 -db_name=my_database```
+### Config description
 
 *login* - database login<br>
 *passwd*- database password<br>
