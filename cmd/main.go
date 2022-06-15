@@ -1,8 +1,8 @@
 package main
 
 import (
-	"flag"
 	"fmt"
+	"github/mysql-dbmanager/internal/config"
 	DbController "github/mysql-dbmanager/internal/controller"
 	"github/mysql-dbmanager/internal/delivery"
 	"net/http"
@@ -15,24 +15,20 @@ import (
 )
 
 func main() {
-	login := flag.String("login", "", "database login")
-	passwd := flag.String("passwd", "", "database password")
-	ip := flag.String("ip", "localhost", "database ip")
-	port := flag.String("port", "", "database port")
-	dbName := flag.String("db_name", "", "database name")
-	maxConns := flag.Int("max_conns", 5, "max database connections")
+	dbConfig, err := config.Init()
+	if err != nil {
+		return
+	}
 
-	flag.Parse()
-
-	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?&charset=utf8&interpolateParams=true", *login, *passwd, *ip, *port, *dbName)
+	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?&charset=utf8&interpolateParams=true", dbConfig.Login, dbConfig.Password, dbConfig.Ip, dbConfig.Port, dbConfig.DbName)
 
 	database, _ := sql.Open("mysql", dataSourceName)
 
-	database.SetMaxOpenConns(*maxConns)
+	database.SetMaxOpenConns(dbConfig.MaxConns)
 
-	err := database.Ping()
+	err = database.Ping()
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	controller := DbController.NewController(database)
@@ -51,6 +47,6 @@ func main() {
 	gorillaMux.HandleFunc("/{table}/{id}", handlers.UpdateEntryHandler).Methods("POST")
 	gorillaMux.HandleFunc("/{table}/{id}", handlers.DeleteEntryHandler).Methods("DELETE")
 
-	fmt.Printf("Start http server on %s:%s\n", *ip, *port)
-	http.ListenAndServe(fmt.Sprintf("%s:%s", *ip, *port), gorillaMux)
+	fmt.Printf("Start http server on %s:%d\n", dbConfig.Ip, dbConfig.Port)
+	http.ListenAndServe(fmt.Sprintf("%s:%d", dbConfig.Ip, dbConfig.Port), gorillaMux)
 }
