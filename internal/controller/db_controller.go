@@ -1,8 +1,10 @@
-package main
+package controller
 
 import (
 	"database/sql"
 	"fmt"
+	"github/mysql-dbmanager/internal/adapter"
+	"github/mysql-dbmanager/internal/utils"
 	"strings"
 )
 
@@ -85,7 +87,7 @@ func (controller *Controller) resolveQueryParams(tableName string, colsByVals ma
 	for _, column := range controller.GetColumns(tableName) {
 		if values, ok := colsByVals[column]; ok {
 			if len(values) > 0 {
-				queryArg := ParseStr(values[0])
+				queryArg := utils.ParseStr(values[0])
 				queryArgs = append(queryArgs, queryArg)
 				affectedColumns = append(affectedColumns, column)
 			}
@@ -118,13 +120,13 @@ func (controller *Controller) Init() {
 		return
 	}
 
-	tablesNames := GetColumnValues("Tables_in_animals", rows)
+	tablesNames := adapter.GetColumnValues("Tables_in_animals", rows)
 	tables := make([]Table, 0, len(tablesNames))
 
 	for _, tableName := range tablesNames {
 		rows, err = controller.getColumnsRows(tableName)
 		// TODO: logger
-		columns := GetColumnValues("Field", rows)
+		columns := adapter.GetColumnValues("Field", rows)
 
 		table := Table{Name: tableName, Columns: columns}
 		tables = append(tables, table)

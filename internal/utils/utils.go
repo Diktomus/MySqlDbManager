@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"database/sql"
@@ -22,12 +22,6 @@ func ParseStr(s string) interface{} {
 		return s
 	}
 	return result
-}
-
-func WriteRowsToResp(adaptedRows []AdaptedRow, resp http.ResponseWriter) {
-	for _, adaptedRow := range adaptedRows {
-		fmt.Fprintf(resp, "%+v\n", adaptedRow)
-	}
 }
 
 func WriteResultToResp(result sql.Result, resp http.ResponseWriter) {

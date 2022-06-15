@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	DbController "github/mysql-dbmanager/internal/controller"
+	"github/mysql-dbmanager/internal/delivery"
 	"net/http"
 
 	"database/sql"
@@ -33,11 +35,11 @@ func main() {
 		panic(err)
 	}
 
-	controller := NewController(database)
+	controller := DbController.NewController(database)
 	controller.Init()
 
-	handlers := &Handlers{
-		controller: controller,
+	handlers := &delivery.Handlers{
+		Controller: controller,
 	}
 
 	gorillaMux := mux.NewRouter()

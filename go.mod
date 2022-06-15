@@ -1,4 +1,4 @@
-module Git/MySqlDbManager
+module github/mysql-dbmanager
 
 go 1.18
 

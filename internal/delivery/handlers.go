@@ -1,20 +1,23 @@
-package main
+package delivery
 
 import (
 	"fmt"
+	"github/mysql-dbmanager/internal/adapter"
+	"github/mysql-dbmanager/internal/controller"
+	"github/mysql-dbmanager/internal/utils"
 	"net/http"
 	"strconv"
 )
 
 type Handlers struct {
-	controller *Controller
+	Controller *controller.Controller
 }
 
 func (h *Handlers) GetTablesHandler(resp http.ResponseWriter, req *http.Request) {
 
 	fmt.Fprintf(resp, "Show tables names:\n")
 
-	for _, table := range h.controller.Tables {
+	for _, table := range h.Controller.Tables {
 		fmt.Fprintf(resp, "%s\n", table)
 	}
 
@@ -22,7 +25,7 @@ func (h *Handlers) GetTablesHandler(resp http.ResponseWriter, req *http.Request)
 }
 
 func (h *Handlers) GetEntriesHandler(resp http.ResponseWriter, req *http.Request) {
-	tableName := GetVariable("table", req)
+	tableName := utils.GetVariable("table", req)
 
 	limit, err := strconv.Atoi(req.FormValue("limit"))
 	if err != nil {
@@ -30,67 +33,66 @@ func (h *Handlers) GetEntriesHandler(resp http.ResponseWriter, req *http.Request
 	}
 	offset, _ := strconv.Atoi(req.FormValue("offset"))
 
-	rows := h.controller.GetRows(tableName, limit, offset)
+	rows := h.Controller.GetRows(tableName, limit, offset)
 	defer rows.Close()
 
-	adaptedRows, err := AdaptSqlRows(rows)
+	adaptedRows, err := adapter.AdaptSqlRows(rows)
 	if err != nil {
 		return
 	}
-
-	WriteRowsToResp(adaptedRows, resp)
+	adapter.WriteRowsToResp(adaptedRows, resp)
 
 	fmt.Println("called GetEntriesHandler")
 }
 
 func (h *Handlers) GetEntryHandler(resp http.ResponseWriter, req *http.Request) {
-	tableName := GetVariable("table", req)
-	id, _ := strconv.Atoi(GetVariable("id", req))
+	tableName := utils.GetVariable("table", req)
+	id, _ := strconv.Atoi(utils.GetVariable("id", req))
 
-	row := h.controller.GetRow(tableName, id)
+	row := h.Controller.GetRow(tableName, id)
 
-	columns := h.controller.GetColumns(tableName)
+	columns := h.Controller.GetColumns(tableName)
 
-	adaptedRow, err := AdaptSqlRow(row, columns)
+	adaptedRow, err := adapter.AdaptSqlRow(row, columns)
 	if err != nil {
 		return
 	}
 	fmt.Fprintf(resp, "Row with id = %d\n", id)
-	WriteRowsToResp([]AdaptedRow{adaptedRow}, resp)
+	adapter.WriteRowsToResp([]adapter.AdaptedRow{adaptedRow}, resp)
 
 	fmt.Println("called GetEntryHandler")
 }
 
 func (h *Handlers) CreateEntryHandler(resp http.ResponseWriter, req *http.Request) {
-	tableName := GetVariable("table", req)
+	tableName := utils.GetVariable("table", req)
 
 	req.ParseMultipartForm(32 << 20)
 
-	result := h.controller.CreateRow(tableName, req.Form)
+	result := h.Controller.CreateRow(tableName, req.Form)
 
-	WriteResultToResp(result, resp)
+	utils.WriteResultToResp(result, resp)
 
 	fmt.Println("called CreateEntryHandler")
 }
 
 func (h *Handlers) UpdateEntryHandler(resp http.ResponseWriter, req *http.Request) {
-	tableName := GetVariable("table", req)
-	id, _ := strconv.Atoi(GetVariable("id", req))
+	tableName := utils.GetVariable("table", req)
+	id, _ := strconv.Atoi(utils.GetVariable("id", req))
 
 	req.ParseMultipartForm(32 << 20)
 
-	result := h.controller.UpdateRow(tableName, req.Form, id)
+	result := h.Controller.UpdateRow(tableName, req.Form, id)
 
-	WriteResultToResp(result, resp)
+	utils.WriteResultToResp(result, resp)
 
 	fmt.Println("called UpdateEntryHandler")
 }
 
 func (h *Handlers) DeleteEntryHandler(resp http.ResponseWriter, req *http.Request) {
-	tableName := GetVariable("table", req)
-	id, _ := strconv.Atoi(GetVariable("id", req))
+	tableName := utils.GetVariable("table", req)
+	id, _ := strconv.Atoi(utils.GetVariable("id", req))
 
-	h.controller.DeleteRow(tableName, id)
+	h.Controller.DeleteRow(tableName, id)
 
 	fmt.Fprintf(resp, "Row with id = %d was deleted\n", id)
 

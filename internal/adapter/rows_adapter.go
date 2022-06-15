@@ -1,7 +1,10 @@
-package main
+package adapter
 
 import (
 	"database/sql"
+	"fmt"
+	"github/mysql-dbmanager/internal/utils"
+	"net/http"
 )
 
 type AdaptedRow map[string]interface{}
@@ -9,7 +12,7 @@ type AdaptedRow map[string]interface{}
 func AdaptSqlRows(rows *sql.Rows) ([]AdaptedRow, error) {
 	adaptedRows := make([]AdaptedRow, 0)
 	columns, _ := rows.Columns()
-	scanBuffer := ScanBuffer{}
+	scanBuffer := utils.ScanBuffer{}
 	scanBuffer.Prepare(len(columns))
 
 	for rows.Next() {
@@ -24,7 +27,7 @@ func AdaptSqlRows(rows *sql.Rows) ([]AdaptedRow, error) {
 }
 
 func AdaptSqlRow(row *sql.Row, columns []string) (AdaptedRow, error) {
-	scanBuffer := ScanBuffer{}
+	scanBuffer := utils.ScanBuffer{}
 	scanBuffer.Prepare(len(columns))
 
 	err := row.Scan(scanBuffer.Pointers...)
@@ -61,4 +64,10 @@ func GetColumnValues(column string, rows *sql.Rows) []string {
 		}
 	}
 	return columnValues
+}
+
+func WriteRowsToResp(adaptedRows []AdaptedRow, resp http.ResponseWriter) {
+	for _, adaptedRow := range adaptedRows {
+		fmt.Fprintf(resp, "%+v\n", adaptedRow)
+	}
 }
