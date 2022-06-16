@@ -1,6 +1,0 @@
-  login: root
-  password: 1234
-  ip: localhost
-  port: 3306
-  dbName: animals
-  maxConns: 10
