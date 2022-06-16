@@ -6,6 +6,8 @@ import (
 	"github/mysql-dbmanager/internal/adapter"
 	"github/mysql-dbmanager/internal/utils"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 type Table struct {
@@ -16,6 +18,7 @@ type Table struct {
 type Controller struct {
 	DB     *sql.DB
 	Tables []Table
+	dbName string
 }
 
 func (controller *Controller) GetColumns(tableName string) []string {
@@ -27,13 +30,13 @@ func (controller *Controller) GetColumns(tableName string) []string {
 	return []string{}
 }
 
-func (controller *Controller) GetRows(tableName string, limit int, offset int) *sql.Rows {
+func (controller *Controller) GetRows(tableName string, limit int, offset int) (*sql.Rows, error) {
 	query := fmt.Sprintf("SELECT * FROM %s WHERE id >= ? LIMIT ?", tableName)
 	rows, err := controller.DB.Query(query, offset, limit)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return rows
+	return rows, nil
 }
 
 func (controller *Controller) GetRow(tableName string, id int) *sql.Row {
@@ -42,7 +45,7 @@ func (controller *Controller) GetRow(tableName string, id int) *sql.Row {
 	return row
 }
 
-func (controller *Controller) UpdateRow(tableName string, columnsByValues map[string][]string, id int) sql.Result {
+func (controller *Controller) UpdateRow(tableName string, columnsByValues map[string][]string, id int) (sql.Result, error) {
 	queryArgs, updatingColumns := controller.resolveQueryParams(tableName, columnsByValues)
 	queryArgs = append(queryArgs, id)
 	updatingColumns = append(updatingColumns, "")
@@ -52,13 +55,13 @@ func (controller *Controller) UpdateRow(tableName string, columnsByValues map[st
 	query := fmt.Sprintf("UPDATE %s SET %s WHERE id = ?", tableName, queryArgsPlaceholders)
 	result, err := controller.DB.Exec(query, queryArgs...)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return result
+	return result, nil
 }
 
-func (controller *Controller) CreateRow(tableName string, columnsByValues map[string][]string) sql.Result {
+func (controller *Controller) CreateRow(tableName string, columnsByValues map[string][]string) (sql.Result, error) {
 	queryArgs, columns := controller.resolveQueryParams(tableName, columnsByValues)
 	queryArgsNames := strings.Join(columns, ", ")
 	queryPlaceholders := strings.Repeat("?, ", len(columns))
@@ -67,18 +70,19 @@ func (controller *Controller) CreateRow(tableName string, columnsByValues map[st
 	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES(%s)", tableName, queryArgsNames, queryPlaceholders)
 	result, err := controller.DB.Exec(query, queryArgs...)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return result
+	return result, err
 }
 
-func (controller *Controller) DeleteRow(tableName string, id int) {
+func (controller *Controller) DeleteRow(tableName string, id int) error {
 	query := fmt.Sprintf("DELETE FROM %s WHERE id = ?", tableName)
 	_, err := controller.DB.Exec(query, id)
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
 func (controller *Controller) resolveQueryParams(tableName string, colsByVals map[string][]string) ([]interface{}, []string) {
@@ -113,28 +117,33 @@ func (controller *Controller) getColumnsRows(tableName string) (*sql.Rows, error
 	return rows, nil
 }
 
-func (controller *Controller) Init() {
+func (controller *Controller) Init() error {
 	rows, err := controller.getTablesRows()
+	defer rows.Close()
 	if err != nil {
-		// TODO: logger
-		return
+		log.Error().Err(err).Msg("controller.Init.getTablesRows")
+		return err
 	}
 
-	tablesNames := adapter.GetColumnValues("Tables_in_animals", rows)
+	tablesNames := adapter.GetColumnValues("Tables_in_"+controller.dbName, rows)
 	tables := make([]Table, 0, len(tablesNames))
 
 	for _, tableName := range tablesNames {
 		rows, err = controller.getColumnsRows(tableName)
-		// TODO: logger
+		if err != nil {
+			log.Error().Err(err).Msg("controller.Init.getColumnsRows:")
+			return err
+		}
 		columns := adapter.GetColumnValues("Field", rows)
 
 		table := Table{Name: tableName, Columns: columns}
 		tables = append(tables, table)
 	}
 	controller.Tables = tables
+
+	return nil
 }
 
-func NewController(database *sql.DB) *Controller {
-
-	return &Controller{DB: database}
+func NewController(database *sql.DB, dbName string) *Controller {
+	return &Controller{DB: database, dbName: dbName}
 }

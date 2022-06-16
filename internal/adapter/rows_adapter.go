@@ -58,8 +58,8 @@ func GetColumnValues(column string, rows *sql.Rows) []string {
 	columnValues := make([]string, 0)
 	for _, adaptedRow := range adaptedRows {
 		if value, ok := adaptedRow[column]; ok {
-			if columnValue, ok := value.([]byte); ok {
-				columnValues = append(columnValues, string(columnValue))
+			if columnValue, ok := value.(string); ok {
+				columnValues = append(columnValues, columnValue)
 			}
 		}
 	}

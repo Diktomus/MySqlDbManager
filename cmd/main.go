@@ -6,17 +6,23 @@ import (
 	DbController "github/mysql-dbmanager/internal/controller"
 	"github/mysql-dbmanager/internal/delivery"
 	"github/mysql-dbmanager/internal/server"
+	"os"
 
 	"database/sql"
 
 	"github.com/gorilla/mux"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+
 	dbConfig, err := config.Init()
 	if err != nil {
+		log.Error().Err(err).Msg("config.Init")
 		return
 	}
 
@@ -26,11 +32,15 @@ func main() {
 	database.SetMaxOpenConns(dbConfig.MaxConns)
 	err = database.Ping()
 	if err != nil {
+		log.Error().Err(err).Msg("Ping database")
 		return
 	}
 
-	controller := DbController.NewController(database)
-	controller.Init()
+	controller := DbController.NewController(database, dbConfig.DbName)
+	err = controller.Init()
+	if err != nil {
+		return
+	}
 
 	handlers := &delivery.Handlers{
 		Controller: controller,
