@@ -26,9 +26,10 @@ func main() {
 		return
 	}
 
-	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?&charset=utf8&interpolateParams=true", dbConfig.Login, dbConfig.Password, dbConfig.Ip, dbConfig.Port, dbConfig.DbName)
+	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", dbConfig.Login, dbConfig.Password, dbConfig.Ip, dbConfig.Port, dbConfig.DbName)
 
 	database, err := sql.Open("mysql", dataSourceName)
+	defer database.Close()
 	database.SetMaxOpenConns(dbConfig.MaxConns)
 	err = database.Ping()
 	if err != nil {
@@ -54,6 +55,11 @@ func main() {
 	router.HandleFunc("/{table}/{id}", handlers.UpdateEntryHandler).Methods("POST")
 	router.HandleFunc("/{table}/{id}", handlers.DeleteEntryHandler).Methods("DELETE")
 
+	message := fmt.Sprintf("Starting http server on %s:%d\n", dbConfig.Ip, dbConfig.Port)
+	log.Info().Msg(message)
 	server := server.NewServer(router, dbConfig)
-	server.Run()
+	err = server.Run()
+	if err != nil {
+		log.Error().Err(err).Msg("server.Run")
+	}
 }

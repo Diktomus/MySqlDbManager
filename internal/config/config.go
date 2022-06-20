@@ -14,7 +14,7 @@ type MySqlDbConfig struct {
 func Init() (*MySqlDbConfig, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath("../config/app")
+	viper.AddConfigPath("config/app")
 	err := viper.ReadInConfig()
 	if err != nil {
 		return nil, err

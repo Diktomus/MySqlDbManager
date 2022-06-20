@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/rs/zerolog/log"
 )
 
 type Server struct {
@@ -22,7 +21,5 @@ func NewServer(router *mux.Router, config *config.MySqlDbConfig) *Server {
 }
 
 func (server *Server) Run() error {
-	message := fmt.Sprintf("Start http server on %s:%d\n", server.config.Ip, server.config.Port)
-	log.Info().Msg(message)
-	return http.ListenAndServe(fmt.Sprintf("%s:%d", server.config.Ip, server.config.Port), server.router)
+	return http.ListenAndServe(fmt.Sprintf(":%d", 8080), server.router)
 }

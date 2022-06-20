@@ -44,6 +44,8 @@ func ResolveAdaptedRow(columns []string, values []interface{}) AdaptedRow {
 	for i, column := range columns {
 		if value, ok := (values[i]).([]byte); ok {
 			adaptedRow[column] = string(value)
+		} else {
+			adaptedRow[column] = values[i]
 		}
 	}
 	return adaptedRow
