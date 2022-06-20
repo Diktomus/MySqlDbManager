@@ -12,9 +12,9 @@ DELETE /{table}/{id} - delete entry with specified id (columns and values are se
 
 ### Config description
 
-*login* - database login<br>
-*passwd*- database password<br>
-*ip* - database ip<br>
-*port* - database port<br>
-*db_name* - database name<br>
-*max_conns* - max database connections<br>
+*LOGIN* - database login<br>
+*PASSWD*- database password<br>
+*IP* - database ip<br>
+*PORT* - database port<br>
+*DB_NAME* - database name<br>
+*MAX_CONNS* - max database connections<br>
