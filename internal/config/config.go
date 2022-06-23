@@ -3,30 +3,25 @@ package config
 import "github.com/spf13/viper"
 
 type MySqlDbConfig struct {
-	Login    string
-	Password string
-	Ip       string
-	Port     int
-	DbName   string
-	MaxConns int
+	DBDriver      string `mapstructure:"DB_DRIVER"`
+	DBSource      string `mapstructure:"DB_SOURCE"`
+	MaxConns      int    `mapstructure:"MAX_CONNS"`
+	ServerAddress string `mapstructure:"SERVER_ADDRESS"`
 }
 
-func Init() (*MySqlDbConfig, error) {
+func Load(configPath string) (dbConfig MySqlDbConfig, err error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath("config/app")
-	err := viper.ReadInConfig()
+	viper.AddConfigPath(configPath)
+	err = viper.ReadInConfig()
 	if err != nil {
-		return nil, err
-	}
-	config := &MySqlDbConfig{
-		Login:    viper.GetString("LOGIN"),
-		Password: viper.GetString("PASSWORD"),
-		Ip:       viper.GetString("IP"),
-		Port:     viper.GetInt("PORT"),
-		DbName:   viper.GetString("DB_NAME"),
-		MaxConns: viper.GetInt("MAX_CONNS"),
+		return MySqlDbConfig{}, err
 	}
 
-	return config, nil
+	err = viper.Unmarshal(&dbConfig)
+	if err != nil {
+		return MySqlDbConfig{}, err
+	}
+
+	return dbConfig, nil
 }

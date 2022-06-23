@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 )
@@ -14,6 +15,15 @@ func GetVariable(variableName string, req *http.Request) string {
 	variable := vars[variableName]
 
 	return variable
+}
+
+func GetDBName(dbSource string) string {
+	slashPos := strings.Index(dbSource, "/")
+	questionPos := strings.Index(dbSource, "?")
+	if questionPos == -1 {
+		return dbSource[slashPos+1:]
+	}
+	return dbSource[slashPos:questionPos]
 }
 
 func ParseStr(s string) interface{} {

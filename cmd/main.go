@@ -6,6 +6,7 @@ import (
 	DbController "github/mysql-dbmanager/internal/controller"
 	"github/mysql-dbmanager/internal/delivery"
 	"github/mysql-dbmanager/internal/server"
+	"github/mysql-dbmanager/internal/utils"
 	"os"
 
 	"database/sql"
@@ -20,24 +21,22 @@ import (
 func main() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
-	dbConfig, err := config.Init()
+	dbConfig, err := config.Load("../config/app")
 	if err != nil {
-		log.Error().Err(err).Msg("config.Init")
+		log.Error().Err(err).Msg("config.Load")
 		return
 	}
-
-	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", dbConfig.Login, dbConfig.Password, dbConfig.Ip, dbConfig.Port, dbConfig.DbName)
-
-	database, err := sql.Open("mysql", dataSourceName)
+	database, err := sql.Open(dbConfig.DBDriver, dbConfig.DBSource)
 	defer database.Close()
+
 	database.SetMaxOpenConns(dbConfig.MaxConns)
 	err = database.Ping()
 	if err != nil {
 		log.Error().Err(err).Msg("Ping database")
 		return
 	}
-
-	controller := DbController.NewController(database, dbConfig.DbName)
+	dbName := utils.GetDBName(dbConfig.DBSource)
+	controller := DbController.NewController(database, dbName)
 	err = controller.Init()
 	if err != nil {
 		return
@@ -55,9 +54,9 @@ func main() {
 	router.HandleFunc("/{table}/{id}", handlers.UpdateEntryHandler).Methods("POST")
 	router.HandleFunc("/{table}/{id}", handlers.DeleteEntryHandler).Methods("DELETE")
 
-	message := fmt.Sprintf("Starting http server on %s:%d\n", dbConfig.Ip, dbConfig.Port)
+	message := fmt.Sprintf("Starting http server on %s\n", dbConfig.ServerAddress)
 	log.Info().Msg(message)
-	server := server.NewServer(router, dbConfig)
+	server := server.NewServer(router, dbConfig.ServerAddress)
 	err = server.Run()
 	if err != nil {
 		log.Error().Err(err).Msg("server.Run")

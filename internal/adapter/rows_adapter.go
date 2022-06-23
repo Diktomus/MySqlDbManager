@@ -69,17 +69,7 @@ func GetColumnValues(column string, rows *sql.Rows) []string {
 }
 
 func WriteRowsToResp(adaptedRows []AdaptedRow, resp http.ResponseWriter) {
-	if len(adaptedRows) > 0 {
-		columns := make([]string, 0, len(adaptedRows[0]))
-		for column, _ := range adaptedRows[0] {
-			columns = append(columns, column)
-		}
-		fmt.Fprintf(resp, "%+v", column)
-	}
 	for _, adaptedRow := range adaptedRows {
-		for column, value := range adaptedRow {
-			fmt.Fprintf(resp, "%+v", adaptedRow)
-		}
-		fmt.Fprintf(resp, "\n")
+		fmt.Fprintf(resp, "%+v\n", adaptedRow)
 	}
 }

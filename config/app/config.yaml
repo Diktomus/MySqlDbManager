@@ -1,6 +1,4 @@
-  LOGIN: root
-  PASSWORD: 1234
-  IP: db
-  PORT: 3306
-  DB_NAME: animals
+  DB_DRIVER: mysql
+  DB_SOURCE: root:1234@tcp(localhost:3306)/animals
   MAX_CONNS: 10
+  SERVER_ADDRESS: localhost:8080
