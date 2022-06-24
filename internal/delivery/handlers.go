@@ -2,8 +2,8 @@ package delivery
 
 import (
 	"fmt"
-	"github/mysql-dbmanager/internal/adapter"
 	"github/mysql-dbmanager/internal/controller"
+	"github/mysql-dbmanager/internal/model"
 	"github/mysql-dbmanager/internal/utils"
 	"net/http"
 	"strconv"
@@ -12,7 +12,7 @@ import (
 )
 
 type Handlers struct {
-	Controller *controller.Controller
+	Controller *controller.MySqlRowsController
 }
 
 func (h *Handlers) GetTablesHandler(resp http.ResponseWriter, req *http.Request) {
@@ -39,21 +39,15 @@ func (h *Handlers) GetEntriesHandler(resp http.ResponseWriter, req *http.Request
 		log.Info().Str("offset", strconv.Itoa(offset)).Msg("GetEntriesHandler: param offset isn't set")
 	}
 
-	rows, err := h.Controller.GetRows(tableName, limit, offset)
-	defer rows.Close()
+	rows, err := h.Controller.GetRows(tableName, int64(limit), int64(offset))
 	if err != nil {
 		log.Error().Err(err).Msg("")
 		http.NotFound(resp, req)
 		return
 	}
-
-	adaptedRows, err := adapter.AdaptSqlRows(rows)
-	if err != nil {
-		log.Error().Err(err).Msg("")
-		http.NotFound(resp, req)
-		return
+	for _, row := range rows {
+		fmt.Fprintf(resp, "%+v\n", row.ColumnsByValues)
 	}
-	adapter.WriteRowsToResp(adaptedRows, resp)
 }
 
 func (h *Handlers) GetEntryHandler(resp http.ResponseWriter, req *http.Request) {
@@ -66,18 +60,14 @@ func (h *Handlers) GetEntryHandler(resp http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	row := h.Controller.GetRow(tableName, id)
-
-	columns := h.Controller.GetColumns(tableName)
-
-	adaptedRow, err := adapter.AdaptSqlRow(row, columns)
+	row, err := h.Controller.GetRow(tableName, int64(id))
 	if err != nil {
 		log.Error().Err(err).Msg("")
 		http.NotFound(resp, req)
 		return
 	}
 	fmt.Fprintf(resp, "Row with id = %d\n", id)
-	adapter.WriteRowsToResp([]adapter.AdaptedRow{adaptedRow}, resp)
+	fmt.Fprintf(resp, "%+v\n", row.ColumnsByValues)
 }
 
 func (h *Handlers) CreateEntryHandler(resp http.ResponseWriter, req *http.Request) {
@@ -86,19 +76,18 @@ func (h *Handlers) CreateEntryHandler(resp http.ResponseWriter, req *http.Reques
 
 	req.ParseMultipartForm(32 << 20)
 
-	result, err := h.Controller.CreateRow(tableName, req.Form)
+	err := h.Controller.CreateRow(tableName, model.Row{})
 	if err != nil {
 		log.Error().Err(err).Msg("CreateEntryHandler")
 		http.Error(resp, http.StatusText(500), 500)
 		return
 	}
-	utils.WriteResultToResp(result, resp)
 }
 
 func (h *Handlers) UpdateEntryHandler(resp http.ResponseWriter, req *http.Request) {
 	log.Info().Msg("Called UpdateEntryHandler")
 	tableName := utils.GetVariable("table", req)
-	id, err := strconv.Atoi(utils.GetVariable("id", req))
+	_, err := strconv.Atoi(utils.GetVariable("id", req))
 	if err != nil {
 		log.Error().Err(err).Msg("")
 		http.NotFound(resp, req)
@@ -107,13 +96,12 @@ func (h *Handlers) UpdateEntryHandler(resp http.ResponseWriter, req *http.Reques
 
 	req.ParseMultipartForm(32 << 20)
 
-	result, err := h.Controller.UpdateRow(tableName, req.Form, id)
+	err = h.Controller.UpdateRow(tableName, model.Row{})
 	if err != nil {
 		log.Error().Err(err).Msg("UpdateEntryHandler")
 		http.Error(resp, http.StatusText(500), 500)
 		return
 	}
-	utils.WriteResultToResp(result, resp)
 }
 
 func (h *Handlers) DeleteEntryHandler(resp http.ResponseWriter, req *http.Request) {
@@ -126,7 +114,7 @@ func (h *Handlers) DeleteEntryHandler(resp http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	err = h.Controller.DeleteRow(tableName, id)
+	err = h.Controller.DeleteRow(tableName, int64(id))
 	if err != nil {
 		log.Error().Err(err).Msg("DeleteEntryHandler")
 		http.Error(resp, http.StatusText(500), 500)

@@ -6,7 +6,6 @@ import (
 	DbController "github/mysql-dbmanager/internal/controller"
 	"github/mysql-dbmanager/internal/delivery"
 	"github/mysql-dbmanager/internal/server"
-	"github/mysql-dbmanager/internal/utils"
 	"os"
 
 	"database/sql"
@@ -35,8 +34,8 @@ func main() {
 		log.Error().Err(err).Msg("Ping database")
 		return
 	}
-	dbName := utils.GetDBName(dbConfig.DBSource)
-	controller := DbController.NewController(database, dbName)
+
+	controller := DbController.NewController(database)
 	err = controller.Init()
 	if err != nil {
 		return
