@@ -12,14 +12,14 @@ import (
 )
 
 type Handlers struct {
-	Controller *controller.MySqlRowsController
+	Controller controller.IController
 }
 
 func (h *Handlers) GetTablesHandler(resp http.ResponseWriter, req *http.Request) {
 	log.Info().Msg("Called GetTablesHandler")
 	fmt.Fprintf(resp, "Show tables names:\n")
 
-	for _, table := range h.Controller.Tables {
+	for _, table := range h.Controller.GetTables() {
 		fmt.Fprintf(resp, "%s\n", table)
 	}
 }

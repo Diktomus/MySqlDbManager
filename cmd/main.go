@@ -35,7 +35,7 @@ func main() {
 		return
 	}
 
-	controller := DbController.NewController(database)
+	controller := DbController.NewMySqlRowsController(database)
 	err = controller.Init()
 	if err != nil {
 		return
