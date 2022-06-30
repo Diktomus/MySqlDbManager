@@ -2,6 +2,8 @@ package controller
 
 import "github/mysql-dbmanager/internal/model"
 
+//go:generate mockgen -source=controller.go -destination=mock_controller/mock.go
+
 type IController interface {
 	CreateRow(tableName string, newRow model.Row) error
 	GetRow(tableName string, rowId int64) (model.Row, error)

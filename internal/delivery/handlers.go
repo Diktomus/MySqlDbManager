@@ -1,6 +1,7 @@
 package delivery
 
 import (
+	"encoding/json"
 	"fmt"
 	"github/mysql-dbmanager/internal/controller"
 	"github/mysql-dbmanager/internal/model"
@@ -17,11 +18,13 @@ type Handlers struct {
 
 func (h *Handlers) GetTablesHandler(resp http.ResponseWriter, req *http.Request) {
 	log.Info().Msg("Called GetTablesHandler")
-	fmt.Fprintf(resp, "Show tables names:\n")
-
-	for _, table := range h.Controller.GetTables() {
-		fmt.Fprintf(resp, "%s\n", table)
+	jsonData, err := json.Marshal(h.Controller.GetTables())
+	if err != nil {
+		log.Error().Err(err).Msg("GetTablesHandler")
+		http.Error(resp, http.StatusText(500), 500)
+		return
 	}
+	fmt.Fprintf(resp, "%s", jsonData)
 }
 
 func (h *Handlers) GetEntriesHandler(resp http.ResponseWriter, req *http.Request) {
@@ -45,9 +48,15 @@ func (h *Handlers) GetEntriesHandler(resp http.ResponseWriter, req *http.Request
 		http.NotFound(resp, req)
 		return
 	}
-	for _, row := range rows {
-		fmt.Fprintf(resp, "%+v\n", row.ColumnsByValues)
+
+	jsonData, err := json.Marshal(rows)
+	if err != nil {
+		log.Error().Err(err).Msg("GetEntriesHandler")
+		http.Error(resp, http.StatusText(500), 500)
+		return
 	}
+
+	fmt.Fprintf(resp, "%s", jsonData)
 }
 
 func (h *Handlers) GetEntryHandler(resp http.ResponseWriter, req *http.Request) {
@@ -66,8 +75,15 @@ func (h *Handlers) GetEntryHandler(resp http.ResponseWriter, req *http.Request) 
 		http.NotFound(resp, req)
 		return
 	}
-	fmt.Fprintf(resp, "Row with id = %d\n", id)
-	fmt.Fprintf(resp, "%+v\n", row.ColumnsByValues)
+
+	jsonData, err := json.Marshal(row)
+	if err != nil {
+		log.Error().Err(err).Msg("GetEntryHandler")
+		http.Error(resp, http.StatusText(500), 500)
+		return
+	}
+
+	fmt.Fprintf(resp, "%s", jsonData)
 }
 
 func (h *Handlers) CreateEntryHandler(resp http.ResponseWriter, req *http.Request) {
@@ -75,8 +91,14 @@ func (h *Handlers) CreateEntryHandler(resp http.ResponseWriter, req *http.Reques
 	tableName := utils.GetVariable("table", req)
 
 	req.ParseMultipartForm(32 << 20)
-
-	err := h.Controller.CreateRow(tableName, model.Row{})
+	columns, values, err := utils.ParseUrlValues(req.Form)
+	if err != nil {
+		log.Error().Err(err).Msg("CreateEntryHandler")
+		http.NotFound(resp, req)
+		return
+	}
+	row := model.NewRow(columns, values)
+	err = h.Controller.CreateRow(tableName, row)
 	if err != nil {
 		log.Error().Err(err).Msg("CreateEntryHandler")
 		http.Error(resp, http.StatusText(500), 500)
@@ -95,8 +117,14 @@ func (h *Handlers) UpdateEntryHandler(resp http.ResponseWriter, req *http.Reques
 	}
 
 	req.ParseMultipartForm(32 << 20)
-
-	err = h.Controller.UpdateRow(tableName, model.Row{})
+	columns, values, err := utils.ParseUrlValues(req.Form)
+	if err != nil {
+		log.Error().Err(err).Msg("UpdateEntryHandler")
+		http.NotFound(resp, req)
+		return
+	}
+	row := model.NewRow(columns, values)
+	err = h.Controller.UpdateRow(tableName, row)
 	if err != nil {
 		log.Error().Err(err).Msg("UpdateEntryHandler")
 		http.Error(resp, http.StatusText(500), 500)

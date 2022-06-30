@@ -42,7 +42,7 @@ func (controller *MySqlRowsController) GetRows(tableName string, limit int64, of
 		if err != nil {
 			return nil, err
 		}
-		row := model.NewRow(rowId, columns, scanBuffer.Values)
+		row := model.NewRow(columns, scanBuffer.Values)
 		rows = append(rows, row)
 		rowId++
 	}
@@ -63,13 +63,13 @@ func (controller *MySqlRowsController) GetRow(tableName string, rowId int64) (mo
 		return model.Row{}, err
 	}
 
-	row := model.NewRow(rowId, columns, scanBuffer.Values)
+	row := model.NewRow(columns, scanBuffer.Values)
 	return row, nil
 }
 
 func (controller *MySqlRowsController) UpdateRow(tableName string, newRow model.Row) error {
 	columns, values := controller.getColumnsAndValues(tableName, newRow)
-	values = append(values, newRow.Id)
+	values = append(values, newRow.GetId())
 	columns = append(columns, "")
 	queryColumnsPlaceholders := strings.Join(columns, " = ?, ")
 	queryColumnsPlaceholders = strings.TrimRight(queryColumnsPlaceholders, ", ")
@@ -95,7 +95,7 @@ func (controller *MySqlRowsController) CreateRow(tableName string, newRow model.
 		return err
 	}
 
-	return err
+	return nil
 }
 
 func (controller *MySqlRowsController) DeleteRow(tableName string, rowId int64) error {

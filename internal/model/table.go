@@ -1,6 +1,6 @@
 package model
 
 type Table struct {
-	Name    string
-	Columns []string
+	Name    string   `json:"name"`
+	Columns []string `json:"columns"`
 }

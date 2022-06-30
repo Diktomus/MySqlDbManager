@@ -18,3 +18,6 @@ migrate-up:
 
 migrate-down:
 	sql-migrate down -config $(MIGRATIONS_CONFIG)
+
+test:
+	go test ./...

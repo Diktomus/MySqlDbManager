@@ -1,13 +1,18 @@
 package model
 
 type Row struct {
-	Id              int64
-	ColumnsByValues map[string]interface{}
+	ColumnsByValues map[string]interface{} `json:"columnsByValues"`
 }
 
-func NewRow(rowId int64, columns []string, values []interface{}) Row {
+func (row *Row) GetId() int64 {
+	if id, ok := row.ColumnsByValues["id"].(int64); ok {
+		return id
+	}
+	return 0
+}
+
+func NewRow(columns []string, values []interface{}) Row {
 	row := &Row{
-		Id:              rowId,
 		ColumnsByValues: make(map[string]interface{}, 0),
 	}
 	for i, column := range columns {
