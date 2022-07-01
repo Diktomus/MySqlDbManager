@@ -1,4 +1,4 @@
-#db-manager
+###db-manager
 db-manager is a web service that makes CRUD (create, read, update, delete) queries via HTTP
 
 ### HTTP requests supported
