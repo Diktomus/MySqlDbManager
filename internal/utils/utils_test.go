@@ -57,3 +57,47 @@ func TestGetVariable(t *testing.T) {
 		})
 	}
 }
+
+func TestParseUrlValues(t *testing.T) {
+	testCases := []struct {
+		name                string
+		inputUrlValues      map[string][]string
+		expectedColumns     []string
+		expectedValues      []interface{}
+		expectedErrorString string
+	}{
+		{
+			name: "test_ok",
+			inputUrlValues: map[string][]string{
+				"id":   {"1"},
+				"kind": {"cat"},
+				"age":  {"3"},
+			},
+			expectedColumns:     []string{"id", "kind", "age"},
+			expectedValues:      []interface{}{1, "cat", 3},
+			expectedErrorString: "",
+		},
+		{
+			name: "test_err",
+			inputUrlValues: map[string][]string{
+				"id":   {"1"},
+				"kind": {"cat", "lion"},
+				"age":  {"3"},
+			},
+			expectedColumns:     nil,
+			expectedValues:      nil,
+			expectedErrorString: "wrong url value=kind",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			columns, values, err := ParseUrlValues(testCase.inputUrlValues)
+			assert.Equal(t, columns, testCase.expectedColumns)
+			assert.Equal(t, values, testCase.expectedValues)
+			if err != nil {
+				assert.EqualError(t, err, testCase.expectedErrorString)
+			}
+		})
+	}
+}
