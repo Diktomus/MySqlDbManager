@@ -1,5 +1,5 @@
-# mysql-dbmanager
-MySql manager is a web service that makes CRUD (create, read, update, delete) queries via HTTP
+#dbmanager
+dbmanager is a web service that makes CRUD (create, read, update, delete) queries via HTTP
 
 ### HTTP requests supported
 
